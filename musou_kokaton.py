@@ -242,6 +242,26 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Gravity(pg.sprite.Sprite): #Spriteクラスを継承
+    def __init__(self, life):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image,(0, 0, 0,),(0, 0, WIDTH, HEIGHT))
+        self.image.set_alpha(200)
+        self.rect = self.image.get_rect()
+        self.life = life
+
+    def update(self):
+        self.life -= 1
+
+        if self.life == 0: #発動時間が0になったら
+            self.kill() #グループから削除
+
+
+        
+
+    
+
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -253,6 +273,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gravity = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -263,6 +284,17 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key ==pg.K_x and score.value > 200: #重力波はXキーで発動
+                gravity.add(Gravity(400))
+                score.value -= 200
+
+                for emy in emys: 
+                    exps.add(Explosion(emy, 100)) #敵機の位置に爆発エフェクト
+                emys.empty() #グループを空にする
+                for bomb in bombs:
+                    exps.add(Explosion(bomb, 50)) #爆弾の位置に爆発エフェクト
+                bombs.empty() #グループを空にする
+
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -288,6 +320,10 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        
+        gravity.draw(screen)
+        gravity.update()        
 
         bird.update(key_lst, screen)
         beams.update()
@@ -298,7 +334,7 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
-        score.update(screen)
+        score.update(screen)    
         pg.display.update()
         tmr += 1
         clock.tick(50)
